@@ -1,10 +1,12 @@
 class Deck
 {
     public List<Card> Cards = [];
+
     public static List<Card> GetFullDeck()
     {
         // Create a standard deck of 52 cards
         List<Card> cards = new List<Card>();
+        // For each suit (1-4)
         for (int suit = 1; suit <= 4; suit++)
         {
             // For each suit, create cards with faces 1-13
@@ -14,21 +16,18 @@ class Deck
                 Card card = new Card();
                 card.Suit = suit;
                 card.Face = face;
-                // Set the value face cards (jack, queen, king) to 10
-                if (face > 10)
-                    card.Value = 10;
-                else
-                    card.Value = face;
+                // Add the card to the deck
                 cards.Add(card);
             }
         }
         return cards;
     }
 
-    public static List<Card> ShuffledDeck(List<Card> cards)
+    public static List<Card> ShuffledDeck()
     {
+        List<Card> cards = GetFullDeck();
         // Shuffle the deck of cards using Fisher-Yates shuffle algorithm
-        Random rand = new Random();
+        Random rand = new();
         for (int i = cards.Count - 1; i > 0; i--)
         {
             int j = rand.Next(0, i + 1);
@@ -53,6 +52,4 @@ class Deck
     {
         Cards = GetFullDeck();
     }
-
-
 }
