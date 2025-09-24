@@ -1,10 +1,10 @@
 class Player
 {
-    public int? Money { get; set; }
+    public double? Money { get; set; }
     public List<Card> Hand { get; set; } = [];
     public List<Card>? SplitHand { get; set; } = [];
 
-    public Player(int startingMoney)
+    public Player(double startingMoney)
     {
         Money = startingMoney;
     }
