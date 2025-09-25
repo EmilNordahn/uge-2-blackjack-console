@@ -5,7 +5,7 @@ class Deck
     public static List<Card> GetFullDeck()
     {
         // Create a standard deck of 52 cards
-        List<Card> cards = new List<Card>();
+        List<Card> cards = [];
         // For each suit (1-4)
         for (int suit = 1; suit <= 4; suit++)
         {

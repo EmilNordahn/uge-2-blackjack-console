@@ -1,119 +1,189 @@
 class Game
 {
-    Deck Cards = new();
-    Player Dealer = new();
-    Player Player = new(100.0);
-    double CurrentBet = 0.0;
+    readonly Deck Cards = new();
+    readonly Player Dealer = new();
+    readonly Player Player = new(100.0);
     double InsuranceBet = 0.0;
 
     public void StartNewGame()
     {
         Cards.Cards = Deck.ShuffledDeck();
+        Player.SplitHand = null;
 
         Console.WriteLine($"New game starting! You have {Player.Money} money.");
 
         // Validate and set the bet amount
-        CurrentBet = PlayerBet();
+        PlayerBet();
+
 
 
         // Deal two cards to player and dealer
-        Player.AddCard(Cards.DrawCard());
-        Dealer.AddCard(Cards.DrawCard());
-        Player.AddCard(Cards.DrawCard());
-        Dealer.AddCard(Cards.DrawCard());
+        Player.MainHand.Add(Cards.DrawCard());
+        Dealer.MainHand.Add(Cards.DrawCard());
+        Player.MainHand.Add(Cards.DrawCard());
+        Dealer.MainHand.Add(Cards.DrawCard());
+
+        // For testing purposes, set player hand to a pair of twos
+        // Player.MainHand.Cards[0] = new Card { Face = 2, Suit = 1 };
+        // Player.MainHand.Cards[1] = new Card { Face = 2, Suit = 2 };
+
+        // For testing purposes, set player hand to an Ace and a ten
+        // Player.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        // Player.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
+
+        // For testing purposes, set dealer hand to an Ace and a ten
+        // Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        // Dealer.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
+
+        // For testing purposes, set dealer hand to an ace and a nine
+        // Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        // Dealer.MainHand.Cards[1] = new Card { Face = 9, Suit = 2 };
 
 
         // Check for blackjack scenario as well as insurance scenario
         CalculateBlackjackOutcome();
 
+        // Immediately end the round if either player or dealer has blackjack
+        if (Player.MainHand.GetValue() == 21 || Dealer.MainHand.GetValue() == 21)
+        {
+            GameEnd();
+            return;
+        }
 
         // Check for split scenario
-        if (Player.Hand[0].Face == Player.Hand[1].Face)
+        if (Player.MainHand.Cards[0].Face == Player.MainHand.Cards[1].Face)
         {
             // Offer player the option to split
             Split();
-            Console.WriteLine("Split opportunity!");
         }
 
+        Player.MainHand = PlayHand(Player.MainHand);
 
-        // Check for double down scenario
-        if (Player.Money >= CurrentBet)
+        if (Player.SplitHand != null)
         {
-            DoubleDown();
+            Console.WriteLine("Playing split hand.");
+            Player.SplitHand = PlayHand(Player.SplitHand);
         }
 
-        // Begin player turn
+        DealerPlay();
 
-        PlayerPlay();
+        CalculateOutcome();
+
+        GameEnd();
     }
 
-    public void PlayerPlay()
+    public Hand PlayHand(Hand hand)
     {
-        Thread.Sleep(500);
-        Console.WriteLine($"Your hand: {string.Join(", ", Player.Hand.Select(card => card.ToString()))} (Value: {Player.GetHandValue()})");
-        Thread.Sleep(500);
-        Console.WriteLine($"Dealer's visible card: {Dealer.Hand[0]}");
-        Thread.Sleep(500);
-        Console.WriteLine("Do you want to (h)it or (s)tand?");
-        string? input = Console.ReadLine().ToLower();
+        bool playing = true;
+        Console.WriteLine($"Your hand is: " + hand.Show());
 
-        if (input == "h" || input == "hit")
+        while (playing)
         {
-            PlayerHit();
-            if (Player.GetHandValue() <= 21)
+            // If the hand has only two cards, offer the option to double down as it's only allowed on the initial turn
+            if (hand.Cards.Count == 2)
             {
-                PlayerPlay();
+                Console.WriteLine("Do you want to (h)it, (s)tand, (d)ouble down?");
+
+                string? input = Console.ReadLine().ToLower();
+                if (input == "h" || input == "hit")
+                {
+                    hand.Add(Cards.DrawCard());
+                    Console.WriteLine($"You hit and received: {hand.Cards.Last()}. Your hand is now: " + hand.Show());
+                    if (hand.GetValue() > 21)
+                    {
+                        Console.WriteLine("Player BUST!");
+                        return hand;
+                    }
+                }
+                else if (input == "s" || input == "stand")
+                {
+                    Console.WriteLine($"You stood on {hand.GetValue()}!");
+                    return hand;
+                }
+                else if (input == "d" || input == "double down")
+                {
+                    // Double the bet, take one card, and end the turn
+                    if (Player.Money < hand.Bet)
+                    {
+                        Console.WriteLine("Not enough money to double down");
+                        continue;
+                    }
+                    else
+                    {
+                        Player.Money -= hand.Bet;
+                        hand.Bet *= 2;
+                        hand.Add(Cards.DrawCard());
+                        Console.WriteLine($"You doubled down and received: {hand.Cards.Last()}. Your hand is now: " + hand.Show());
+                        if (hand.GetValue() > 21)
+                        {
+                            Console.WriteLine("Player BUST!");
+                        }
+                        return hand;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter 'h' for hit, 's' for stand, or 'd' for double down.");
+                }
+            }
+            // If the hand has more than two cards, only allow hit or stand as double down is not allowed after the initial turn
+            else
+            {
+                if (hand.GetValue() == 21)
+                {
+                    // Automatically end turn if player has 21
+                    Console.WriteLine("Standing on 21!");
+                    playing = false;
+                    continue;
+                }
+                Console.WriteLine("Do you want to (h)it or (s)tand?");
+                string? input = Console.ReadLine().ToLower();
+                if (input == "h" || input == "hit")
+                {
+                    hand.Add(Cards.DrawCard());
+                    Console.WriteLine($"You hit and received: {hand.Cards.Last()}. Your hand is now: " + hand.Show());
+                    if (hand.GetValue() > 21)
+                    {
+                        Console.WriteLine("Player BUST!");
+                        return hand;
+                    }
+                }
+                else if (input == "s" || input == "stand")
+                {
+                    Console.WriteLine($"You stood on {hand.GetValue()}!");
+                    return hand;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter 'h' for hit or 's' for stand.");
+                }
             }
         }
-        else if (input == "s" || input == "stand")
-        {
-            Stand();
-        }
-        else
-        {
-            Console.WriteLine("Invalid input. Please enter 'h' to hit or 's' to stand.");
-            PlayerPlay();
-        }
-    }
-
-    public void PlayerHit()
-    {
-        Thread.Sleep(500);
-        Player.AddCard(Cards.DrawCard());
-        Console.WriteLine($"You hit and received: {Player.Hand.Last()}. Your hand is now: {string.Join(", ", Player.Hand.Select(card => card.ToString()))} (Value: {Player.GetHandValue()})");
-        if (Player.GetHandValue() > 21)
-        {
-            PlayerBust();
-        }
-    }
-
-    public void Stand()
-    {
-        Thread.Sleep(500);
-        Console.WriteLine($"You chose to stand with your current hand of {string.Join(",", Player.Hand.Select(card => card.ToString()))}. With a value of {Player.GetHandValue()}.");
-        DealerPlay();
+        // Ensure a return value for all code paths, however this should never be reached
+        return hand;
     }
 
     public void DealerPlay()
     {
+        // Dealer must hit until their hand value is 17 or higher
         Thread.Sleep(500);
-        Console.WriteLine("Dealer's turn.");
-        Thread.Sleep(250);
-        Console.WriteLine($"Dealer's hand: {string.Join(", ", Dealer.Hand.Select(card => card.ToString()))} (Value: {Dealer.GetHandValue()})");
-        while (Dealer.GetHandValue() < 17)
+        Console.WriteLine($"Dealer's hand is: " + Dealer.MainHand.Show());
+        while (Dealer.MainHand.GetValue() < 17)
         {
-            Dealer.AddCard(Cards.DrawCard());
-            Console.WriteLine($"Dealer hits: {string.Join(", ", Dealer.Hand.Select(card => card.ToString()))} (Value: {Dealer.GetHandValue()})");
+            Dealer.MainHand.Add(Cards.DrawCard());
+            Console.WriteLine($"Dealer hits and receives: {Dealer.MainHand.Cards.Last()}. Dealer's hand is now: " + Dealer.MainHand.Show());
             Thread.Sleep(500);
-            if (Dealer.GetHandValue() > 21)
-            {
-                DealerBust();
-                return;
-            }
         }
-        // Dealer stands, compare hands
-        Console.WriteLine($"Dealer stands with a hand value of {Dealer.GetHandValue()}.");
-        CalculateOutcome();
+        if (Dealer.MainHand.GetValue() > 21)
+        {
+            Console.WriteLine("Dealer BUST!");
+            Thread.Sleep(500);
+        }
+        else
+        {
+            Console.WriteLine("Dealer stands.");
+            Thread.Sleep(500);
+        }
     }
 
     public bool OfferInsurance()
@@ -124,9 +194,10 @@ class Game
 
         if (input == "y" || input == "yes")
         {
-            if (Player.Money >= CurrentBet / 2)
+            // Insurance bet is half the original bet
+            if (Player.Money >= Player.MainHand.Bet / 2)
             {
-                InsuranceBet = CurrentBet / 2;
+                InsuranceBet = Player.MainHand.Bet / 2;
                 Player.Money -= InsuranceBet;
                 Console.WriteLine($"Insurance bet of {InsuranceBet} placed. You have {Player.Money} money left.");
                 Thread.Sleep(500);
@@ -152,140 +223,54 @@ class Game
         }
     }
 
-    public void DoubleDown()
+    public void Split()
     {
-        Thread.Sleep(500);
-        Console.WriteLine("Do you want to double down? (y/n)");
+        Console.WriteLine("You have a pair! Do you want to split? (y/n)");
         string? input = Console.ReadLine().ToLower();
         if (input == "y" || input == "yes")
         {
-            Console.WriteLine(Player.Money + " " + CurrentBet);
-            // Continue with double down logic
-            if (Player.Money >= CurrentBet)
+            if (Player.Money >= Player.MainHand.Bet)
             {
-                // Double the current bet
-                Player.Money -= CurrentBet;
-                CurrentBet *= 2;
-                Console.WriteLine($"Your bet has been doubled to {CurrentBet}. You have {Player.Money} money left.");
-                // Player gets exactly one more card
-                Player.AddCard(Cards.DrawCard());
-                Console.WriteLine($"Your hand: {string.Join(", ", Player.Hand.Select(card => card.ToString()))} (Value: {Player.GetHandValue()})");
-                Thread.Sleep(500);
-                if (Player.GetHandValue() > 21)
-                {
-                    PlayerBust();
-                }
-                else
-                {
-                    Stand();
-                }
+                Player.Money -= Player.MainHand.Bet;
+                Player.SplitHand = new Hand { Bet = Player.MainHand.Bet };
+                Player.SplitHand.Add(Player.MainHand.Cards[1]);
+                Player.MainHand.Cards.RemoveAt(1);
+                Player.MainHand.Add(Cards.DrawCard());
+                Player.SplitHand.Add(Cards.DrawCard());
+                Console.WriteLine($"Hands after split:\nMain Hand: {Player.MainHand.Show()}\nSplit Hand: {Player.SplitHand.Show()}");
             }
             else
             {
-                Console.WriteLine("You do not have enough money to double down.");
-                PlayerPlay();
+                Console.WriteLine("Not enough money to split.");
             }
         }
         else if (input == "n" || input == "no")
         {
-            // Continue with normal play
-            PlayerPlay();
+            Console.WriteLine("No split taken.");
         }
         else
         {
             Console.WriteLine("Invalid input. Please enter 'y' for yes or 'n' for no.");
-            DoubleDown();
+            Split();
         }
-    }
-
-    public void Split()
-    {
-        // Implement split logic here
-    }
-
-    public void Push()
-    {
-        Thread.Sleep(500);
-        // Pushing returns the player's bet
-        Player.Money += CurrentBet;
-        Console.WriteLine("It's a push! Your bet has been returned.");
-        GameEnd();
-    }
-
-    public void PlayerBust()
-    {
-        Thread.Sleep(500);
-        Console.WriteLine($"You busted with a hand value of {Player.GetHandValue()}!");
-        PlayerLose();
-    }
-
-    public void DealerBust()
-    {
-        Thread.Sleep(500);
-        Console.WriteLine($"Dealer busted with a hand value of {Dealer.GetHandValue()}!");
-        PlayerWin();
-    }
-
-    public void PlayerLose()
-    {
-        Thread.Sleep(500);
-        // Player loses their bet, which has already been deducted
-        Console.WriteLine("You lost this round.");
-        GameEnd();
-    }
-
-    public void PlayerWin()
-    {
-        Thread.Sleep(500);
-        // Implement player win logic here
-        Console.WriteLine($"You win this round with a hand value of {Player.GetHandValue()}!");
-        Player.Money += CurrentBet * 2;
-        GameEnd();
-    }
-
-    public void PlayerBlackjack()
-    {
-        Thread.Sleep(500);
-        // Blackjack pays 3:2
-        Player.Money += (int)(CurrentBet * 1.5);
-        Console.WriteLine("Blackjack! You win 1.5 times your bet.");
-        GameEnd();
-    }
-
-
-    public void DealerWin()
-    {
-        Thread.Sleep(500);
-        // Implement dealer win logic here
-        Console.WriteLine($"Dealer wins this round with a hand value of {Dealer.GetHandValue()}.");
-        GameEnd();
-    }
-    public void DealerBlackjack()
-    {
-        Thread.Sleep(500);
-        // Implement dealer blackjack logic here
-        Console.WriteLine("Dealer has blackjack!");
-        GameEnd();
     }
 
     public void CalculateBlackjackOutcome()
     {
         Thread.Sleep(500);
-        int playerValue = Player.GetHandValue();
-        int dealerValue = Dealer.GetHandValue();
         bool insuranceBet = false;
 
-        Console.WriteLine($"Dealer's visible card: {Dealer.Hand[0]}");
+        Console.WriteLine($"Dealer's visible card: {Dealer.MainHand.Cards[0]}");
         Thread.Sleep(1000);
-        Console.WriteLine($"Your hand: {string.Join(", ", Player.Hand.Select(card => card.ToString()))} (Value: {Player.GetHandValue()})");
+        Console.WriteLine($"Your hand: " + Player.MainHand.Show());
 
-        if (Dealer.Hand[0].Face == 1)
+        if (Dealer.MainHand.Cards[0].Face == 1)
         {
             // Dealer has an Ace visible, offer insurance
             insuranceBet = OfferInsurance();
         }
 
-        if (playerValue == 21 && dealerValue == 21)
+        if (Player.MainHand.GetValue() == 21 && Dealer.MainHand.GetValue() == 21)
         {
             Console.WriteLine("Both you and the dealer have blackjack! It's a push.");
 
@@ -295,20 +280,20 @@ class Game
                 Console.WriteLine("Your insurance bet pays 2 to 1.");
                 Player.Money += InsuranceBet * 2;
             }
-            Push();
         }
-        else if (playerValue == 21)
+        else if (Player.MainHand.GetValue() == 21)
         {
-            PlayerBlackjack();
+            // Player has blackjack, but dealer does not.
+            Console.WriteLine("Blackjack! You win 1.5x your bet plus your original bet.");
+            Player.Money += Player.MainHand.Bet * 2.5;
         }
-        else if (dealerValue == 21)
+        else if (Dealer.MainHand.GetValue() == 21)
         {
             if (insuranceBet)
             {
                 Console.WriteLine("Your insurance bet pays 2 to 1.");
                 Player.Money += InsuranceBet * 2;
             }
-            DealerBlackjack();
         }
         else if (insuranceBet)
         {
@@ -329,11 +314,10 @@ class Game
         }
 
         // Reset game state for a new round
-        CurrentBet = 0;
-        InsuranceBet = 0;
-        Player.Hand.Clear();
-        Dealer.Hand.Clear();
-        Player.SplitHand?.Clear();
+        InsuranceBet = 0.0;
+        Player.MainHand.Cards.Clear();
+        Dealer.MainHand.Cards.Clear();
+        Player.SplitHand?.Cards.Clear();
 
 
         Console.WriteLine($"You now have {Player.Money} money.");
@@ -354,48 +338,69 @@ class Game
             GameEnd();
         }
     }
-    public double PlayerBet()
+    public void PlayerBet()
     {
-        Thread.Sleep(500);
-        // Prompt the player for a bet and deduct it from their money
-        Console.WriteLine($"You have {Player.Money} money.\nPlease enter your bet amount:");
-        string? betInput = Console.ReadLine();
-        if (double.TryParse(betInput, out double betAmount))
+        Console.WriteLine("Please enter your bet amount:");
+        string? input = Console.ReadLine();
+        if (double.TryParse(input, out double betAmount))
         {
             if (betAmount > 0 && betAmount <= Player.Money)
             {
                 Player.Money -= betAmount;
-                return betAmount;
+                Player.MainHand.Bet = betAmount;
+                Console.WriteLine($"You have placed a bet of {betAmount}. You have {Player.Money} money left.");
             }
             else
             {
                 Console.WriteLine("Invalid bet amount. Please enter a positive number within your available money.");
-                return PlayerBet();
             }
         }
         else
         {
             Console.WriteLine("Invalid input. Please enter a numeric value for your bet.");
-            return PlayerBet();
+            PlayerBet();
         }
     }
 
     public void CalculateOutcome()
     {
-        int playerValue = Player.GetHandValue();
-        int dealerValue = Dealer.GetHandValue();
+        // Calculate outcome for main hand
+        CalculateHandOutcome(Player.MainHand);
 
-        if (playerValue > dealerValue)
+        // Calculate outcome for split hand if it exists
+        if (Player.SplitHand != null)
         {
-            PlayerWin();
+            CalculateHandOutcome(Player.SplitHand);
+        }
+    }
+
+    public void CalculateHandOutcome(Hand hand)
+    {
+        int playerValue = hand.GetValue();
+        int dealerValue = Dealer.MainHand.GetValue();
+
+        if (playerValue > 21)
+        {
+            Console.WriteLine($"You busted with a hand value of {playerValue}. You lose your bet of {hand.Bet}.");
+        }
+        else if (dealerValue > 21)
+        {
+            Console.WriteLine($"Dealer busted with a hand value of {dealerValue}. You win!");
+            Player.Money += hand.Bet * 2;
+        }
+        else if (playerValue > dealerValue)
+        {
+            Console.WriteLine($"You win with a hand value of {playerValue} against dealer's {dealerValue}!");
+            Player.Money += hand.Bet * 2;
         }
         else if (playerValue < dealerValue)
         {
-            DealerWin();
+            Console.WriteLine($"You lose with a hand value of {playerValue} against dealer's {dealerValue}. You lose your bet of {hand.Bet}.");
         }
         else
         {
-            Push();
+            Console.WriteLine($"It's a push with both you and the dealer having a hand value of {playerValue}. Your bet of {hand.Bet} is returned.");
+            Player.Money += hand.Bet;
         }
     }
 }

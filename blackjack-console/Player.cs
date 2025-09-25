@@ -1,8 +1,8 @@
 class Player
 {
     public double? Money { get; set; }
-    public List<Card> Hand { get; set; } = [];
-    public List<Card>? SplitHand { get; set; } = [];
+    public Hand MainHand { get; set; } = new Hand();
+    public Hand? SplitHand { get; set; }
 
     public Player(double startingMoney)
     {
@@ -10,18 +10,4 @@ class Player
     }
 
     public Player() { }
-
-    public void AddCard(Card card)
-    {
-        Hand.Add(card);
-    }
-
-    public int GetHandValue()
-    {
-        return Card.GetValue(Hand);
-    }
-
-
-
-
 }
