@@ -3,7 +3,6 @@ class Game
     readonly Deck Cards = new();
     readonly Player Dealer = new();
     Player Player = new();
-    double InsuranceBet = 0.0;
 
     public void InitializeGame()
     {
@@ -53,8 +52,8 @@ class Game
         // Player.MainHand.Cards[1] = new Card { Face = 2, Suit = 2 };
 
         // For testing purposes, set player hand to an Ace and a ten
-        // Player.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
-        // Player.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
+        Player.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        Player.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
 
         // For testing purposes, set dealer hand to an Ace and a ten
         Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
@@ -213,44 +212,6 @@ class Game
         }
     }
 
-    public bool OfferInsurance()
-    {
-        Thread.Sleep(500);
-        Console.WriteLine("Dealer's visible card is an Ace. Do you want to buy insurance? (y/n)");
-        string? input = Console.ReadLine();
-        input = (input != null) ? input.ToLower() : "";
-
-        if (input == "y" || input == "yes")
-        {
-            // Insurance bet is half the original bet
-            if (Player.Money >= Player.MainHand.Bet / 2)
-            {
-                InsuranceBet = Player.MainHand.Bet / 2;
-                Player.Money -= InsuranceBet;
-                Console.WriteLine($"Insurance bet of {InsuranceBet} placed. You have {Player.Money} money left.");
-                Thread.Sleep(500);
-                return true;
-            }
-            else
-            {
-                Console.WriteLine("You do not have enough money to place an insurance bet.");
-                Thread.Sleep(500);
-                return false;
-            }
-        }
-        else if (input == "n" || input == "no")
-        {
-            Console.WriteLine("No insurance taken.");
-            Thread.Sleep(500);
-            return false;
-        }
-        else
-        {
-            Console.WriteLine("Invalid input. Please enter 'y' for yes or 'n' for no.");
-            return OfferInsurance();
-        }
-    }
-
     public void Split()
     {
         Console.WriteLine("You have a pair! Do you want to split? (y/n)");
@@ -296,7 +257,7 @@ class Game
         if (Dealer.MainHand.Cards[0].Face == 1)
         {
             // Dealer has an Ace visible, offer insurance
-            insuranceBet = OfferInsurance();
+            insuranceBet = Player.OfferInsurance();
         }
 
         if (Player.MainHand.GetValue() == 21 && Dealer.MainHand.GetValue() == 21)
@@ -307,8 +268,9 @@ class Game
             if (insuranceBet)
             {
                 Console.WriteLine("Your insurance bet pays 2 to 1.");
-                Player.Money += InsuranceBet * 3;
+                Player.Money += Player.InsuranceBet * 3;
             }
+            Player.Money += Player.MainHand.Bet;
         }
         else if (Player.MainHand.GetValue() == 21)
         {
@@ -322,7 +284,7 @@ class Game
             if (insuranceBet)
             {
                 Console.WriteLine("Your insurance bet pays 2 to 1.");
-                Player.Money += InsuranceBet * 3;
+                Player.Money += Player.InsuranceBet * 3;
             }
         }
         else if (insuranceBet)
@@ -344,7 +306,7 @@ class Game
         }
 
         // Reset game state for a new round
-        InsuranceBet = 0.0;
+        Player.InsuranceBet = 0.0;
         Player.MainHand.Cards.Clear();
         Dealer.MainHand.Cards.Clear();
         Player.SplitHand?.Cards.Clear();
@@ -352,21 +314,23 @@ class Game
 
         Console.WriteLine($"You now have {Player.Money} money.");
         Console.WriteLine("Do you want to play again? (y/n)");
-        string? input = Console.ReadLine();
-        input = (input != null) ? input.ToLower() : "";
-        if (input == "y" || input == "yes")
+        while (true)
         {
-            StartNewGame();
-        }
-        else if (input == "n" || input == "no")
-        {
-            Console.WriteLine("Thanks for playing!");
-            Environment.Exit(0);
-        }
-        else
-        {
-            Console.WriteLine("Invalid input. Please enter 'y' for yes or 'n' for no.");
-            GameEnd();
+            string? input = Console.ReadLine();
+            input = (input != null) ? input.ToLower() : "";
+            if (input == "y" || input == "yes")
+            {
+                StartNewGame();
+            }
+            else if (input == "n" || input == "no")
+            {
+                Console.WriteLine("Thanks for playing!");
+                Environment.Exit(0);
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter 'y' for yes or 'n' for no.");
+            }
         }
     }
     public void PlayerBet()
