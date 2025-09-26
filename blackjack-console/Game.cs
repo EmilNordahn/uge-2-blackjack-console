@@ -57,8 +57,8 @@ class Game
         // Player.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
 
         // For testing purposes, set dealer hand to an Ace and a ten
-        // Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
-        // Dealer.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
+        Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        Dealer.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
 
         // For testing purposes, set dealer hand to an ace and a nine
         // Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
@@ -307,7 +307,7 @@ class Game
             if (insuranceBet)
             {
                 Console.WriteLine("Your insurance bet pays 2 to 1.");
-                Player.Money += InsuranceBet * 2;
+                Player.Money += InsuranceBet * 3;
             }
         }
         else if (Player.MainHand.GetValue() == 21)
@@ -318,10 +318,11 @@ class Game
         }
         else if (Dealer.MainHand.GetValue() == 21)
         {
+            Console.WriteLine($"Dealer has a blackjack! \nDealer's hand: {Dealer.MainHand.Show()}");
             if (insuranceBet)
             {
                 Console.WriteLine("Your insurance bet pays 2 to 1.");
-                Player.Money += InsuranceBet * 2;
+                Player.Money += InsuranceBet * 3;
             }
         }
         else if (insuranceBet)
