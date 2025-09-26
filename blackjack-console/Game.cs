@@ -37,8 +37,7 @@ class Game
         Console.WriteLine($"New round starting! You have {Player.Money} money.");
 
         // Validate and set the bet amount
-        PlayerBet();
-
+        Player.Bet();
 
 
         // Deal two cards to player and dealer
@@ -52,12 +51,12 @@ class Game
         // Player.MainHand.Cards[1] = new Card { Face = 2, Suit = 2 };
 
         // For testing purposes, set player hand to an Ace and a ten
-        Player.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
-        Player.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
+        // Player.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        // Player.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
 
         // For testing purposes, set dealer hand to an Ace and a ten
-        Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
-        Dealer.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
+        // Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
+        // Dealer.MainHand.Cards[1] = new Card { Face = 10, Suit = 2 };
 
         // For testing purposes, set dealer hand to an ace and a nine
         // Dealer.MainHand.Cards[0] = new Card { Face = 1, Suit = 1 };
@@ -331,29 +330,6 @@ class Game
             {
                 Console.WriteLine("Invalid input. Please enter 'y' for yes or 'n' for no.");
             }
-        }
-    }
-    public void PlayerBet()
-    {
-        Console.WriteLine("Please enter your bet amount:");
-        string? input = Console.ReadLine();
-        if (double.TryParse(input, out double betAmount))
-        {
-            if (betAmount > 0 && betAmount <= Player.Money)
-            {
-                Player.Money -= betAmount;
-                Player.MainHand.Bet = betAmount;
-                Console.WriteLine($"You have placed a bet of {betAmount}. You have {Player.Money} money left.");
-            }
-            else
-            {
-                Console.WriteLine("Invalid bet amount. Please enter a positive number within your available money.");
-            }
-        }
-        else
-        {
-            Console.WriteLine("Invalid input. Please enter a numeric value for your bet.");
-            PlayerBet();
         }
     }
 

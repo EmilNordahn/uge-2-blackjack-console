@@ -12,6 +12,33 @@ class Player
 
     public Player() { }
 
+    public void Bet()
+    {
+        while (true)
+        {
+            Console.WriteLine("Please enter your bet amount:");
+            string? input = Console.ReadLine();
+            if (double.TryParse(input, out double betAmount))
+            {
+                if (betAmount > 0 && betAmount <= Money)
+                {
+                    Money -= betAmount;
+                    MainHand.Bet = betAmount;
+                    Console.WriteLine($"You have placed a bet of {betAmount}. You have {Money} money left.");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid bet amount. Please enter a positive number within your available money.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter a numeric value for your bet.");
+            }
+        }
+    }
+
     public bool OfferInsurance()
     {
         Thread.Sleep(500);
