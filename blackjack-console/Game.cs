@@ -2,15 +2,40 @@ class Game
 {
     readonly Deck Cards = new();
     readonly Player Dealer = new();
-    readonly Player Player = new(100.0);
+    Player Player = new();
     double InsuranceBet = 0.0;
+
+    public void InitializeGame()
+    {
+        Console.WriteLine("New game started! Please enter starting money");
+        while (true)
+        {
+            string? input = Console.ReadLine();
+            if (double.TryParse(input, out double money))
+            {
+                if (money <= 0)
+                {
+                    Console.WriteLine("Invalid input. Please enter a postive numeric value for your starting money");
+                    continue;
+                }
+                Player = new Player(money);
+                break;
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter a numeric value for your starting money.");
+            }
+        }
+
+        StartNewGame();
+    }
 
     public void StartNewGame()
     {
         Cards.Cards = Deck.ShuffledDeck();
         Player.SplitHand = null;
 
-        Console.WriteLine($"New game starting! You have {Player.Money} money.");
+        Console.WriteLine($"New round starting! You have {Player.Money} money.");
 
         // Validate and set the bet amount
         PlayerBet();
@@ -84,7 +109,8 @@ class Game
             {
                 Console.WriteLine("Do you want to (h)it, (s)tand, (d)ouble down?");
 
-                string? input = Console.ReadLine().ToLower();
+                string? input = Console.ReadLine();
+                input = (input != null) ? input.ToLower() : "";
                 if (input == "h" || input == "hit")
                 {
                     hand.Add(Cards.DrawCard());
@@ -137,7 +163,8 @@ class Game
                     continue;
                 }
                 Console.WriteLine("Do you want to (h)it or (s)tand?");
-                string? input = Console.ReadLine().ToLower();
+                string? input = Console.ReadLine();
+                input = (input != null) ? input.ToLower() : "";
                 if (input == "h" || input == "hit")
                 {
                     hand.Add(Cards.DrawCard());
@@ -190,7 +217,8 @@ class Game
     {
         Thread.Sleep(500);
         Console.WriteLine("Dealer's visible card is an Ace. Do you want to buy insurance? (y/n)");
-        string? input = Console.ReadLine().ToLower();
+        string? input = Console.ReadLine();
+        input = (input != null) ? input.ToLower() : "";
 
         if (input == "y" || input == "yes")
         {
@@ -226,7 +254,8 @@ class Game
     public void Split()
     {
         Console.WriteLine("You have a pair! Do you want to split? (y/n)");
-        string? input = Console.ReadLine().ToLower();
+        string? input = Console.ReadLine();
+        input = (input != null) ? input.ToLower() : "";
         if (input == "y" || input == "yes")
         {
             if (Player.Money >= Player.MainHand.Bet)
@@ -322,7 +351,8 @@ class Game
 
         Console.WriteLine($"You now have {Player.Money} money.");
         Console.WriteLine("Do you want to play again? (y/n)");
-        string? input = Console.ReadLine().ToLower();
+        string? input = Console.ReadLine();
+        input = (input != null) ? input.ToLower() : "";
         if (input == "y" || input == "yes")
         {
             StartNewGame();
