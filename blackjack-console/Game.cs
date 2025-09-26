@@ -98,7 +98,7 @@ class Game
     public Hand PlayHand(Hand hand)
     {
         bool playing = true;
-        Console.WriteLine($"Your hand is: " + hand.Show());
+        Console.WriteLine($"\nYour hand is: " + hand.Show());
 
         while (playing)
         {
@@ -213,19 +213,26 @@ class Game
 
     public void Split()
     {
+        // Offer player the option to split if they have a pair
         Console.WriteLine("You have a pair! Do you want to split? (y/n)");
+        // Get and validate user input
         string? input = Console.ReadLine();
         input = (input != null) ? input.ToLower() : "";
         if (input == "y" || input == "yes")
         {
+            // Ensure player has enough money to split
             if (Player.Money >= Player.MainHand.Bet)
             {
                 Player.Money -= Player.MainHand.Bet;
+                // Declare and initialize the split hand
                 Player.SplitHand = new Hand { Bet = Player.MainHand.Bet };
+                // Move one of the cards from the main hand to the split hand
                 Player.SplitHand.Add(Player.MainHand.Cards[1]);
                 Player.MainHand.Cards.RemoveAt(1);
+                // Deal one additional card to each hand
                 Player.MainHand.Add(Cards.DrawCard());
                 Player.SplitHand.Add(Cards.DrawCard());
+                // Show both hands
                 Console.WriteLine($"Hands after split:\nMain Hand: {Player.MainHand.Show()}\nSplit Hand: {Player.SplitHand.Show()}");
             }
             else
